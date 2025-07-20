@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import assets from '../assets/assets';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import axios from 'axios'; // ✅ Needed for fetch
+import axios from 'axios';
 
 const ProfilePage = () => {
   const { authUser, updateProfile } = useContext(AuthContext);
@@ -11,15 +11,13 @@ const ProfilePage = () => {
   const [bio, setBio] = useState('');
   const navigate = useNavigate();
 
-  // ✅ Fetch latest user from backend when profile page mounts
   useEffect(() => {
     const fetchLatestUser = async () => {
       try {
         const { data } = await axios.get('/api/auth/check');
         if (data.success) {
-          setName(data.user.fullName || '');
+          setName(data.user.fullname || '');
           setBio(data.user.bio || '');
-          setSelectedImg(null); // Clear selected image preview
         }
       } catch (err) {
         console.error('Error refreshing profile', err.message);
@@ -31,18 +29,24 @@ const ProfilePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedImg) {
-      await updateProfile({ fullName: name, bio });
-      navigate('/');
-      return;
+
+    try {
+      if (!selectedImg) {
+        const success = await updateProfile({ fullname: name, bio });
+        if (success) navigate('/');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedImg);
+      reader.onload = async () => {
+        const base64Image = reader.result;
+        const success = await updateProfile({ profilePic: base64Image, fullname: name, bio });
+        if (success) navigate('/');
+      };
+    } catch (err) {
+      console.error("❌ Profile update failed:", err.message);
     }
-    const reader = new FileReader();
-    reader.readAsDataURL(selectedImg);
-    reader.onload = async () => {
-      const base64Image = reader.result;
-      await updateProfile({ ProfilePic: base64Image, fullName: name, bio });
-      navigate('/');
-    };
   };
 
   return (
@@ -62,7 +66,7 @@ const ProfilePage = () => {
               src={
                 selectedImg
                   ? URL.createObjectURL(selectedImg)
-                  : authUser?.ProfilePic || assets.avatar_icon
+                  : authUser?.profilePic || assets.avatar_icon
               }
               alt=""
               className="w-12 h-12 rounded-full object-cover"
@@ -75,14 +79,14 @@ const ProfilePage = () => {
             type="text"
             required
             placeholder="Your name"
-            className="p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="p-2 border border-gray-500 rounded-md"
           />
           <textarea
             onChange={(e) => setBio(e.target.value)}
             value={bio}
             placeholder="Write profile bio"
             required
-            className="p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="p-2 border border-gray-500 rounded-md"
             rows={4}
           ></textarea>
 
@@ -99,7 +103,7 @@ const ProfilePage = () => {
           src={
             selectedImg
               ? URL.createObjectURL(selectedImg)
-              : authUser?.ProfilePic || assets.logo_icon
+              : authUser?.profilePic || assets.logo_icon
           }
           alt="Profile"
         />
