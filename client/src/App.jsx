@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import { Toaster } from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
+import bg from './assets/bgImage.svg';
 
 
 const App = () => {
@@ -15,7 +16,7 @@ const App = () => {
   if (loading) return <div className="text-white p-5">Loading...</div>;
 
   return (
-    <div className="bg-[url('./src/assets/bgImage.svg')] bg-contain">
+    <div className="min-h-screen bg-cover bg-no-repeat" style={{ backgroundImage: `url(${bg})` }}>
       <Toaster />
       <Routes>
         <Route
